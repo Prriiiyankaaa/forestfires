@@ -1,4 +1,4 @@
-# 🌲 Forest Fire Weather Index (FWI) Prediction
+# Forest Fire Weather Index (FWI) Prediction
 
 A machine learning web application that predicts the **Fire Weather Index (FWI)** from meteorological inputs, built on the Algerian Forest Fires dataset and deployed via a Flask web interface.
 
@@ -45,7 +45,7 @@ Linear Regression was selected for deployment due to its superior performance an
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 | Category | Technology |
 |---|---|
