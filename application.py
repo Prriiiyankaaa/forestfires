@@ -1,30 +1,33 @@
-from flask import Flask, render_template, request
+from flask import Flask, flash, get_flashed_messages, redirect, render_template, request, url_for
 import pickle
-import numpy as np
 import pandas as pd
-from sklearn.preprocessing import StandardScaler
-
-
 
 application = Flask(__name__)
 app = application
+app.secret_key = "fwi-prediction-secret-key"
 
-## import ridge resgressor and standard scaler pickle
-ridge_model = pickle.load(open('models/ridge.pkl','rb'))
-
+## import linear regression model 
+model = pickle.load(open('models/linear_model.pkl','rb'))
 standard_scaler = pickle.load(open('models/scaler.pkl','rb'))
-
-
 
 
 @app.route('/')
 def index():
-    return render_template('index.html')
-
+    error_message = None
+    flashed_messages = get_flashed_messages(with_categories=True)
+    for category, message in flashed_messages:
+        if category == 'error':
+            error_message = message
+            break
+    return render_template('home.html', error=error_message)
 
 @app.route('/predictdata', methods=['GET','POST'])
 def predict_datapoint():
-    if request.method == 'POST':
+    if request.method == 'GET':
+        return redirect(url_for('index'))
+    try:
+        day = int(request.form['Day'])
+        month = int(request.form['Month'])
         temperature = float(request.form['Temperature'])
         RH = float(request.form['RH'])
         Ws = float(request.form['Ws'])
@@ -34,14 +37,29 @@ def predict_datapoint():
         ISI = float(request.form['ISI'])
         Classes = float(request.form['Classes'])
         Region = float(request.form['Region'])
-        
 
-        scaled_data = standard_scaler.transform([[temperature, RH, Ws, Rain, FFMC, DMC, ISI, Classes, Region]])
-        prediction = ridge_model.predict(scaled_data)
+        input_row = pd.DataFrame([ 
+            {
+                'day': day,
+                'month': month,
+                'Temperature': temperature,
+                'RH': RH,
+                'Ws': Ws,
+                'Rain': Rain,
+                'FFMC': FFMC,
+                'DMC': DMC,
+                'ISI': ISI,
+                'Classes': Classes,
+                'Region': Region,
+            }
+        ])
 
-        return render_template('home.html', result=prediction[0])
-    else:
-        return render_template('home.html')
+        scaled_data = standard_scaler.transform(input_row)
+        prediction = model.predict(scaled_data)
+        return render_template('home.html', result=round(float(prediction[0]), 3))
+    except (ValueError, KeyError):
+        flash('Please enter valid numeric values for all fields.', 'error')
+        return redirect(url_for('index'))
 
 
 
@@ -49,4 +67,4 @@ if __name__ == '__main__':
     app.run(host="0.0.0.0", port = 8080)
     
     
-    #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
+    
